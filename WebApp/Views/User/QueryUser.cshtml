@@ -1,0 +1,170 @@
+﻿@using DomainLayer;
+
+@model List<User>
+
+@{
+    ViewData["Title"] = "Usuarios Consulta";
+}
+
+@{
+    // Function to display the gender according to the received code
+    string ShowGender(char codeGender)
+    {
+        switch (codeGender)
+        {
+            case 'M':
+                return "Masculino";
+            case 'F':
+                return "Femenino";
+            case 'O':
+                return "Otro";
+            default:
+                return "Desconocido";
+        }
+    }
+}
+
+<div class="card" style="width: 100%">
+    <div class="card-body">
+        <h1 class="text-center">Listado de Usuarios</h1>
+        @if (Model.Count == 0)
+        {
+            <p class="text-center">No hay usuarios registrados.</p>
+        }
+        else
+        {
+            @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage) || !string.IsNullOrEmpty(ViewBag.SuccessMessage))
+            {
+                <div class="alert @(string.IsNullOrEmpty(ViewBag.ErrorMessage) ? "alert-success" : "alert-danger")">
+                    @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
+                    {
+                        @ViewBag.ErrorMessage
+                    }
+                    else
+                    {
+                        @ViewBag.SuccessMessage
+                    }
+                </div>
+            }
+
+            <table class="table text-center">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Fecha de Nacimiento</th>
+                        <th>Genero</th>
+                        <th>Opciones
+                        <th />
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        <tr>
+                            <td>@user.Name</td>
+                            <td>@user.Birthdate?.ToString("d")</td>
+                            <td>@ShowGender(user.Gender)</td>
+                            <td>
+                                <a class="btn btn-info" data-bs-toggle="modal" data-bs-target="#editUserModal"
+                                   data-userid="@user.UserId"
+                                   data-name="@user.Name" 
+                                   data-birthdate="@user.Birthdate?.ToString("yyyy-MM-dd")" 
+                                   data-gender="@user.Gender">
+                                    Modificar
+                                </a>
+                                <a class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteUserModal"
+                                   data-userid="@user.UserId"
+                                   data-name="@user.Name">
+                                    Eliminar
+                                </a>
+                            </td>
+
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <div class="container-fluid text-center">
+                <a class="btn btn-success" asp-controller="User" asp-action="UserIndex">Agregar Usuario</a>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="modal fade" id="editUserModal" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <form asp-action="QueryUser" asp-controller="User" method="post" class="modal-content">
+            <div class="modal-header">
+                <h2 class="text-center">Editar Usuario</h2>
+            </div>
+            <div class="modal-body d-flex flex-column gap-3">
+                <input type="hidden" id="editUserId" name="UserId" />
+                <div>
+                    <label>Nombre:</label>
+                    <input id="editUserName" class="form-control" type="text" name="Name" required />
+                </div>
+                <div>
+                    <label>Fecha de Nacimiento:</label>
+                    <input id="editUserBirthdate" class="form-control" type="date" name="Birthdate" required />
+                </div>
+                <div>
+                    <label>Género:</label>
+                    <select id="editUserGender" class="form-select" name="Gender" required >
+                        <option value='M'>Masculino</option>
+                        <option value='F'>Femenino</option>
+                        <option value='O'>Otro</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-success">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteUserModal" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <form asp-action="DeleteUser" asp-controller="User" method="post" class="modal-content">
+            <div class="modal-header">
+                <h2 class="text-center">Eliminar Usuario</h2>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="deleteUserId" name="UserId" />
+                <p>¿Está seguro de que desea eliminar al usuario <span id="deleteUserName"></span>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-danger">Eliminar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $('#editUserModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var userId = button.data('userid');
+            var name = button.data('name');
+            var birthdate = button.data('birthdate');
+            var gender = button.data('gender');
+
+            $('#editUserId').val(userId);
+            $('#editUserName').val(name);
+            $('#editUserBirthdate').val(birthdate);
+            $('#editUserGender').val(gender);
+        });
+
+        $('#deleteUserModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var userId = button.data('userid');
+            var name = button.data('name');
+
+            $('#deleteUserId').val(userId);
+            $('#deleteUserName').text(name);
+        });
+
+    </script>
+}
+
